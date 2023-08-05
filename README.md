@@ -1,14 +1,79 @@
-# Welcome to your CDK TypeScript project
+# Resume IaC
 
-This is a blank project for CDK development with TypeScript.
+Infrastructure as a Code configuration using [AWS Cloud Development Kit (CDK)](https://aws.amazon.com/cdk/) for my resume website.
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+## Set up AWS access
+
+1. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+2. Log in to the account: `aws sso login`
+3. Verify caller identity: `aws sts get-caller-identity`
+4. List buckets: `aws s3 ls`
+
+## Initialize the AWS account for the CDK
+
+### Bootstrap
+
+This will create the S3 bucket and related objects required for CDK metadata:
+
+```shell
+npx cdk bootstrap --tags project=resume
+```
+
+### Undo bootstrap
+
+At the moment [there is no single command](https://github.com/aws/aws-cdk/issues/986) to delete every objects the bootstrap command created, so you have to do that manually.
+
+Delete every object created by this stack:
+
+```shell
+npx cdk destroy
+```
+
+Delete the CloudFormation stack itself:
+
+```shell
+aws cloudformation delete-stack --stack-name CDKToolkit
+```
+
+Find the CDK bucket name: 
+
+```shell
+aws s3 ls | grep cdktoolkit
+```
+
+Delete bucket (`--force` is required to delete non-empty bucket):
+
+```shell
+aws s3 rb s3://TODO-ADD-BUCKET-NAME --force
+```
 
 ## Useful commands
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template
+| Command             | Description                                                                |
+|---------------------|----------------------------------------------------------------------------|
+| `npm run build:tsc` | Generate JavaScript files from the TypeScript source code.                 |
+| `npm run build:cdk` | Generate (synthesize) the CloudFormation template to the `cdk.out` folder. |
+| `npm run diff`      | Compares the stack with the content of the AWS account.                    |
+| `npm run deploy`    | Create the resources in the AWS account.                                   |
+| `npx cdk`           | Run any CDK commands, e.g. `npx cdk --version`                             |
+
+## Behind the scenes
+
+This project was created with:
+
+```shell
+npx aws-cdk init --language typescript
+```
+
+The `cdk.json` file tells the CDK Toolkit how to execute the app.
+
+## Issues
+
+`diff` does not work before first deployment: https://github.com/aws/aws-cdk/issues/17942
+Solution: in `cdk.json` set `"@aws-cdk/core:newStyleStackSynthesis": false`
+
+
+
+
+
+

@@ -5,8 +5,11 @@
     "resume-iac": "bin/resume-iac.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build:tsc": "tsc",
+    "build:cdk": "cdk synth",
     "watch": "tsc -w",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",    
     "test": "jest",
     "cdk": "cdk"
   },
