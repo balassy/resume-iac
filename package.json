@@ -9,7 +9,8 @@
     "build:cdk": "cdk synth",
     "watch": "tsc -w",
     "diff": "cdk diff",
-    "deploy": "cdk deploy",    
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",    
     "test": "jest",
     "cdk": "cdk"
   },

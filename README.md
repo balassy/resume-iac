@@ -38,7 +38,7 @@ aws cloudformation delete-stack --stack-name CDKToolkit
 Find the CDK bucket name: 
 
 ```shell
-aws s3 ls | grep cdktoolkit
+aws s3 ls | grep cdk
 ```
 
 Delete bucket (`--force` is required to delete non-empty bucket):
@@ -55,6 +55,7 @@ aws s3 rb s3://TODO-ADD-BUCKET-NAME --force
 | `npm run build:cdk` | Generate (synthesize) the CloudFormation template to the `cdk.out` folder. |
 | `npm run diff`      | Compares the stack with the content of the AWS account.                    |
 | `npm run deploy`    | Create the resources in the AWS account.                                   |
+| `npm run destroy`   | Delete the created resources from the AWS account.                         |
 | `npx cdk`           | Run any CDK commands, e.g. `npx cdk --version`                             |
 
 ## Behind the scenes
