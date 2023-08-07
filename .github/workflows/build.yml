@@ -43,5 +43,7 @@ jobs:
         role-to-assume: ${{ secrets.AWS_CDK_ROLE_ARN }}
         role-session-name: CdkDeploySession
         aws-region: ${{ secrets.AWS_REGION }}
+    - name: View AWS credentials
+      run: aws sts get-caller-identity
     - name:  View diff
       run: npm run diff        
