@@ -32,3 +32,11 @@ jobs:
       with:
         name: CDK output
         path: cdk.out/
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_CDK_ROLE_ARN }}
+        role-session-name: CdkDeploySession
+        aws-region: ${{ secrets.AWS_REGION }}
+    - name:  View diff
+      run: npm run diff        
