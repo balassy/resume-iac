@@ -1,0 +1,45 @@
+name: Continuous Integration - Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+# Secrets:
+#   AWS_REGION: "us-east-1"
+#   AWS_CDK_ROLE_ARN: "arn:aws:iam::1234567890:role/example-role"
+
+permissions:
+  id-token: write   # This is required for requesting the JWT for AWS Actions
+  contents: read    # This is required for actions/checkout for AWS Actions
+
+jobs:
+  call-build:
+    uses: balassy/resume-iac/.github/workflows/build.yml@main
+    secrets: inherit
+
+  deploy:
+    needs: call-build
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: Build output
+        path: cdk.out
+    - name: View build artifacts
+      run: ls -R
+      working-directory: cdk.out
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_CDK_ROLE_ARN }}
+        role-session-name: CdkDeploySession
+        aws-region: ${{ secrets.AWS_REGION }}
+    - name: View AWS credentials
+      run: aws sts get-caller-identity
+    - name:  CDK view diff
+      run: npm run diff
+    - name:  CDK deploy to the cloud
+      run: npm run deploy

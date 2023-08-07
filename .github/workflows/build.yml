@@ -5,11 +5,6 @@ on:
     branches-ignore: main
   workflow_call:
 
-permissions:
-  id-token: write   # This is required for requesting the JWT for AWS Actions
-  contents: read    # This is required for actions/checkout for AWS Actions
-
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -36,14 +31,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: CDK output
-        path: cdk.out/
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        role-to-assume: ${{ secrets.AWS_CDK_ROLE_ARN }}
-        role-session-name: CdkDeploySession
-        aws-region: ${{ secrets.AWS_REGION }}
-    - name: View AWS credentials
-      run: aws sts get-caller-identity
-    - name:  View diff
-      run: npm run diff        
+        path: cdk.out/    
