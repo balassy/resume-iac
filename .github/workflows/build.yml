@@ -5,6 +5,11 @@ on:
     branches-ignore: main
   workflow_call:
 
+permissions:
+  id-token: write   # This is required for requesting the JWT for AWS Actions
+  contents: read    # This is required for actions/checkout for AWS Actions
+
+
 jobs:
   build:
     runs-on: ubuntu-latest
