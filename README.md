@@ -47,6 +47,68 @@ Delete bucket (`--force` is required to delete non-empty bucket):
 aws s3 rb s3://TODO-ADD-BUCKET-NAME --force
 ```
 
+## Set up AWS access for GitHub Actions
+
+For detailed steps follow [this](https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/) guide.
+
+In short:
+
+1. Create [GitHub OIDC provider](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services).
+
+2. Check that the CDK bootstrap process successfully created `cdk-` roles in IAM.  
+
+3. Create the `resume-iac-cdk` IAM policy:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"sts:AssumeRole"
+			],
+			"Resource": [
+				"arn:aws:iam::*:role/cdk-*"
+			]
+		}
+	]
+}
+```
+
+4. Create `resume-iac-deployer` IAM role:
+
+Policy: `resume-iac-cdk`
+
+Trust relationships:
+
+```json
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Principal": {
+				"Federated": "arn:aws:iam::236419181767:oidc-provider/token.actions.githubusercontent.com"
+			},
+			"Action": "sts:AssumeRoleWithWebIdentity",
+			"Condition": {
+				"StringEquals": {
+					"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
+				},
+				"StringLike": {
+					"token.actions.githubusercontent.com:sub": "repo:TODO-YOUR-GITHUB-USERNAME/TODO-YOUR-GITHUB-REPO:*"
+				}
+			}
+		}
+	]
+}
+```
+
+5. Copy the ARN of the `resume-iac-deployer` role and set it as the `AWS_CDK_ROLE_ARN` Actions repository secret to this GitHub repository.
+
+6. Set the `AWS_REGION` Actions repository secret.
+
 ## Useful commands
 
 | Command             | Description                                                                |
