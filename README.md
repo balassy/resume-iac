@@ -105,7 +105,7 @@ Trust relationships:
 }
 ```
 
-5. Copy the ARN of the `resume-iac-deployer` role and set it as the `AWS_CDK_ROLE_ARN` Actions repository secret to this GitHub repository.
+5. Copy the ARN of the `resume-iac-deployer` role and set it as the `AWS_CDK_ROLE_ARN` Actions environment secret to this GitHub repository for both `Staging` and `Production` environments.
 
 6. Set the `AWS_REGION` Actions repository secret.
 
