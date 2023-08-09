@@ -23,6 +23,25 @@ This will create the S3 bucket and related objects required for CDK metadata:
 npx cdk bootstrap --tags project=resume
 ```
 
+It it fails with `Unable to resolve AWS account to use.` you probably logged in to the AWS CLI with a named profiled instead of the default. In this case set these environment variables:
+
+```powershell
+$env:CDK_DEFAULT_ACCOUNT=361385831802
+$env:CDK_DEFAULT_REGION='us-east-1'
+```
+
+And specify the `--profile` parameter:
+
+```shell
+npx cdk bootstrap --tags project=resume --profile my-sso-profile-name
+```
+
+Similarly, **specify the profile** in all npm script that calls the CDK:
+
+```shell
+npm run diff -- --profile my-sso-profile-name
+```
+
 ### Undo bootstrap
 
 At the moment [there is no single command](https://github.com/aws/aws-cdk/issues/986) to delete every objects the bootstrap command created, so you have to do that manually.
@@ -93,7 +112,7 @@ Trust relationships:
 		{
 			"Effect": "Allow",
 			"Principal": {
-				"Federated": "arn:aws:iam::236419181767:oidc-provider/token.actions.githubusercontent.com"
+				"Federated": "arn:aws:iam::TODO-YOUR-ACCOUNT-ID:oidc-provider/token.actions.githubusercontent.com"
 			},
 			"Action": "sts:AssumeRoleWithWebIdentity",
 			"Condition": {
