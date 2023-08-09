@@ -1,5 +1,9 @@
 # Resume IaC
 
+[![Continuous Integration - Build](https://github.com/balassy/resume-iac/actions/workflows/build.yml/badge.svg)](https://github.com/balassy/resume-iac/actions/workflows/build.yml)
+
+[![Continuous Integration - Deploy](https://github.com/balassy/resume-iac/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/balassy/resume-iac/actions/workflows/build-and-deploy.yml)
+
 Infrastructure as a Code configuration using [AWS Cloud Development Kit (CDK)](https://aws.amazon.com/cdk/) for my resume website.
 
 ## Set up AWS access
