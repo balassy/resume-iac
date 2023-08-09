@@ -51,7 +51,7 @@ jobs:
     - name:  CDK view diff
       run: npm run diff
     - name:  CDK deploy to Staging
-      run: npm run deploy
+      run: npm run deploy -- --require-approval never
 
   deploy-to-production:
     needs: deploy-to-staging
@@ -87,4 +87,4 @@ jobs:
     - name:  CDK view diff
       run: npm run diff
     - name:  CDK deploy to Production
-      run: npm run deploy
+      run: npm run deploy -- --require-approval never
