@@ -7,7 +7,6 @@ export class ResumeStack extends cdk.Stack {
     super(scope, id, props);
 
     new s3.Bucket(this, 'resume-frontend-root', {
-      bucketName: 'resume-frontend-root'
     });
   }
 }
