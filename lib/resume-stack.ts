@@ -4,18 +4,30 @@ import { Bucket, IBucket, BucketAccessControl } from 'aws-cdk-lib/aws-s3';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { AllowedMethods, Distribution, IDistribution, IOrigin, OriginAccessIdentity, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { ARecord, AaaaRecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
+import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+
+export interface ResumeStackProps extends cdk.StackProps {
+  certificateArn: string
+  domainName: string
+  domainAlias: string
+}
 
 export class ResumeStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: ResumeStackProps) {
     super(scope, id, props);
 
     const s3RootBucket: IBucket = this.createS3Bucket();
 
     const s3Origin: IOrigin = this.createS3Origin(s3RootBucket);
 
-    const certificate: ICertificate = Certificate.fromCertificateArn(this, 'ResumeFrontendCertificate', 'arn:aws:acm:us-east-1:469685831701:certificate/d07887ab-04a1-479d-b9f8-70766740a7bb');
+    const certificate: ICertificate = this.findCertificate(props.certificateArn);
 
-    this.createCloudFrontDistribution(s3Origin, certificate);
+    const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [props.domainName, props.domainAlias]);
+
+    const hostedZone: IHostedZone = this.findHostedZone(props.domainName);
+
+    this.createDnsRecords(hostedZone, cloudFrontDistribution, props.domainAlias);
   }
 
   private createS3Bucket(): IBucket {
@@ -31,7 +43,7 @@ export class ResumeStack extends cdk.Stack {
     });
   }
 
-  private createCloudFrontDistribution(origin: IOrigin, certificate: ICertificate): IDistribution {
+  private createCloudFrontDistribution(origin: IOrigin, certificate: ICertificate, domainNames: string[]): IDistribution {
     return new Distribution(this, 'ResumeFrontendDistribution', {
       defaultBehavior: {
         origin,
@@ -39,11 +51,31 @@ export class ResumeStack extends cdk.Stack {
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS
       },
       defaultRootObject: 'index.html',
-      domainNames: [
-        'staging.balassy.me',
-        'www.staging.balassy.me'
-      ],
+      domainNames,
       certificate
+    });  
+  }
+
+  private findCertificate(certificateArn: string): ICertificate {
+    return Certificate.fromCertificateArn(this, 'ResumeFrontendCertificate', certificateArn);
+  }
+
+  private findHostedZone(domainName: string): IHostedZone {
+    return HostedZone.fromLookup(this, 'ResumeFrontendDnsHostedZone', {
+      domainName
+    });
+  }
+
+  private createDnsRecords(zone: IHostedZone, cloudFrontDistribution: IDistribution, domainAlias: string) {
+    new ARecord(this, 'ResumeFrontendDnsARecord', {
+      zone,
+      target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution))      
+    });
+
+    new AaaaRecord(this, 'ResumeFrontendDnsAliasRecord', {
+      zone,
+      target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution)),
+      recordName: `${domainAlias}.`     
     });
   }
 }
