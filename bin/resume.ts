@@ -18,4 +18,8 @@ new ResumeStack(app, 'ResumeStack', {
   // env: { account: '123456789012', region: 'us-east-1' },
 
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+
+  certificateArn: 'arn:aws:acm:us-east-1:469685831701:certificate/d07887ab-04a1-479d-b9f8-70766740a7bb',
+  domainName: 'staging.balassy.me',
+  domainAlias: 'www.staging.balassy.me'
 });
