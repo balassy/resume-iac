@@ -2,7 +2,7 @@
   "name": "resume-iac",
   "version": "0.1.0",
   "bin": {
-    "resume-iac": "bin/resume-iac.js"
+    "resume": "bin/resume.js"
   },
   "scripts": {
     "build:tsc": "tsc",

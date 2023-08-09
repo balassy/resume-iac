@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { ResumeIacStack } from '../lib/resume-iac-stack';
+import { ResumeStack } from '../lib/resume-stack';
 
 const app = new cdk.App();
-new ResumeIacStack(app, 'ResumeIacStack', {
+new ResumeStack(app, 'ResumeStack', {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
