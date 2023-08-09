@@ -17,10 +17,10 @@ jobs:
     uses: balassy/resume-iac/.github/workflows/build.yml@main
     secrets: inherit
 
-  deploy:
+  deploy-to-staging:
     needs: call-build
-
     runs-on: ubuntu-latest
+    environment: Staging
 
     steps:
     - name: Git checkout
@@ -51,4 +51,40 @@ jobs:
     - name:  CDK view diff
       run: npm run diff
     - name:  CDK deploy to Staging
+      run: npm run deploy
+
+  deploy-to-production:
+    needs: deploy-to-staging
+    runs-on: ubuntu-latest
+    environment: Production
+
+    steps:
+    - name: Git checkout
+      uses: actions/checkout@v3
+    - name: Install Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci      
+    - name: Download build artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: Build output
+        path: cdk.out
+    - name: View build artifacts
+      run: ls -R
+      working-directory: cdk.out
+    - name: Configure AWS credentials for Production
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: ${{ secrets.AWS_CDK_ROLE_ARN }}
+        role-session-name: CdkProductionDeploySession
+        aws-region: ${{ secrets.AWS_REGION }}
+    - name: View AWS credentials
+      run: aws sts get-caller-identity
+    - name:  CDK view diff
+      run: npm run diff
+    - name:  CDK deploy to Production
       run: npm run deploy
