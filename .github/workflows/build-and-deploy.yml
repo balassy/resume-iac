@@ -6,7 +6,7 @@ on:
 
 # Secrets:
 #   AWS_REGION: "us-east-1"
-#   AWS_CDK_ROLE_ARN: "arn:aws:iam::1234567890:role/example-role"
+#   AWS_STAGING_CDK_ROLE_ARN: "arn:aws:iam::1234567890:role/example-role"
 
 permissions:
   id-token: write   # This is required for requesting the JWT for AWS Actions
@@ -40,15 +40,15 @@ jobs:
     - name: View build artifacts
       run: ls -R
       working-directory: cdk.out
-    - name: Configure AWS credentials
+    - name: Configure AWS credentials for Staging
       uses: aws-actions/configure-aws-credentials@v2
       with:
-        role-to-assume: ${{ secrets.AWS_CDK_ROLE_ARN }}
-        role-session-name: CdkDeploySession
+        role-to-assume: ${{ secrets.AWS_STAGING_CDK_ROLE_ARN }}
+        role-session-name: CdkStagingDeploySession
         aws-region: ${{ secrets.AWS_REGION }}
     - name: View AWS credentials
       run: aws sts get-caller-identity
     - name:  CDK view diff
       run: npm run diff
-    - name:  CDK deploy to the cloud
+    - name:  CDK deploy to Staging
       run: npm run deploy
