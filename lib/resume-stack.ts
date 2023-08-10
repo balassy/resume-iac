@@ -11,6 +11,7 @@ export interface ResumeStackProps extends cdk.StackProps {
   certificateArn: string;
   domainName: string;
   domainAlias: string;
+  hostedZoneName: string;
   hostedZoneId: string;
 }
 
@@ -26,7 +27,7 @@ export class ResumeStack extends cdk.Stack {
 
     const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [props.domainName, props.domainAlias]);
 
-    const hostedZone: IHostedZone = this.findHostedZone(props.hostedZoneId);
+    const hostedZone: IHostedZone = this.findHostedZone(props.hostedZoneName, props.hostedZoneId);
 
     this.createDnsRecords(hostedZone, cloudFrontDistribution, props.domainAlias);
   }
@@ -61,8 +62,11 @@ export class ResumeStack extends cdk.Stack {
     return Certificate.fromCertificateArn(this, 'ResumeFrontendCertificate', certificateArn);
   }
 
-  private findHostedZone(hostedZoneId: string): IHostedZone {
-    return HostedZone.fromHostedZoneId(this, 'ResumeFrontendDnsHostedZone', hostedZoneId);
+  private findHostedZone(zoneName: string, hostedZoneId: string): IHostedZone {
+    return HostedZone.fromHostedZoneAttributes(this, 'ResumeFrontendDnsHostedZone', {
+      zoneName,
+      hostedZoneId
+    });
   }
 
   private createDnsRecords(zone: IHostedZone, cloudFrontDistribution: IDistribution, domainAlias: string) {
