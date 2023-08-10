@@ -8,9 +8,11 @@ import { ARecord, AaaaRecord, HostedZone, IHostedZone, RecordTarget } from 'aws-
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 
 export interface ResumeStackProps extends cdk.StackProps {
-  certificateArn: string
-  domainName: string
-  domainAlias: string
+  certificateArn: string;
+  domainName: string;
+  domainAlias: string;
+  hostedZoneName: string;
+  hostedZoneId: string;
 }
 
 export class ResumeStack extends cdk.Stack {
@@ -25,7 +27,7 @@ export class ResumeStack extends cdk.Stack {
 
     const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [props.domainName, props.domainAlias]);
 
-    const hostedZone: IHostedZone = this.findHostedZone(props.domainName);
+    const hostedZone: IHostedZone = this.findHostedZone(props.hostedZoneName, props.hostedZoneId);
 
     this.createDnsRecords(hostedZone, cloudFrontDistribution, props.domainAlias);
   }
@@ -60,9 +62,10 @@ export class ResumeStack extends cdk.Stack {
     return Certificate.fromCertificateArn(this, 'ResumeFrontendCertificate', certificateArn);
   }
 
-  private findHostedZone(domainName: string): IHostedZone {
-    return HostedZone.fromLookup(this, 'ResumeFrontendDnsHostedZone', {
-      domainName
+  private findHostedZone(zoneName: string, hostedZoneId: string): IHostedZone {
+    return HostedZone.fromHostedZoneAttributes(this, 'ResumeFrontendDnsHostedZone', {
+      zoneName,
+      hostedZoneId
     });
   }
 
