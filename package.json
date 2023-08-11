@@ -6,11 +6,13 @@
   },
   "scripts": {
     "build:tsc": "tsc",
-    "build:cdk": "cdk synth",
+    "build:cdk": "cdk synth ResumeStack",
+    "build:cdk:bootstrap": "cdk synth ResumeBootstrapStack",
     "watch": "tsc -w",
-    "diff": "cdk diff",
-    "deploy": "cdk deploy",
-    "destroy": "cdk destroy",    
+    "diff": "cdk diff ResumeStack",
+    "deploy": "cdk deploy ResumeStack",
+    "deploy:bootstrap": "cdk deploy ResumeBootstrapStack",
+    "destroy": "cdk destroy ResumeStack",    
     "test": "jest",
     "cdk": "cdk"
   },
