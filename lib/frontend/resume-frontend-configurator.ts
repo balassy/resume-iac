@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { Construct } from "constructs";
+import { IResumeFrontendParams } from './resume-frontend.types';
 
 const ParamNames = {
   DOMAIN_NAME: '/Resume/Frontend/DomainName',
@@ -10,20 +11,12 @@ const ParamNames = {
   HOSTEDZONE_ID: '/Resume/Frontend/HostedZoneId',
 };
 
-export interface ResumeFrontendParams {
-  domainName: string;
-  domainAlias: string;
-  certificateArn: string;
-  hostedZoneName: string;
-  hostedZoneId: string;  
-}
-
 export class ResumeFrontendConfigurator extends Construct {
   constructor(scope: Construct, id: string ) {
     super(scope, id);
   }
 
-  public getParams(): ResumeFrontendParams {
+  public getParams(): IResumeFrontendParams {
     return {
       domainName: StringParameter.valueForStringParameter(this, ParamNames.DOMAIN_NAME),
       domainAlias: StringParameter.valueForStringParameter(this, ParamNames.DOMAIN_ALIAS),
