@@ -6,10 +6,11 @@ import { AllowedMethods, Distribution, IDistribution, IOrigin, OriginAccessIdent
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { ARecord, AaaaRecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 
 export interface ResumeStackProps extends cdk.StackProps {
   certificateArn: string;
-  domainName: string;
+ // domainName: string;
   domainAlias: string;
   hostedZoneName: string;
   hostedZoneId: string;
@@ -19,13 +20,15 @@ export class ResumeStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ResumeStackProps) {
     super(scope, id, props);
 
+    const domainName: string = StringParameter.valueForStringParameter(this, 'ResumeFrontendDomainName');
+
     const s3RootBucket: IBucket = this.createS3Bucket();
 
     const s3Origin: IOrigin = this.createS3Origin(s3RootBucket);
 
     const certificate: ICertificate = this.findCertificate(props.certificateArn);
 
-    const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [props.domainName, props.domainAlias]);
+    const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [domainName, props.domainAlias]);
 
     const hostedZone: IHostedZone = this.findHostedZone(props.hostedZoneName, props.hostedZoneId);
 
