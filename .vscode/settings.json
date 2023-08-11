@@ -1,0 +1,9 @@
+{
+  "files.exclude": {
+    "{lib,bin,test}/**/*.js": true,
+    "{lib,bin,test}/**/*.d.ts": true,
+    "cdk.out": true,
+    "node_modules": true,
+    "package-lock.json": true
+  },
+}

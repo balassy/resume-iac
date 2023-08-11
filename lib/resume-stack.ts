@@ -8,16 +8,8 @@ import { ARecord, AaaaRecord, HostedZone, IHostedZone, RecordTarget } from 'aws-
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { ResumeFrontendConfigurator, ResumeFrontendParams } from './frontend/resume-frontend-configurator';
 
-export interface ResumeStackProps extends cdk.StackProps {
-  certificateArn: string;
- // domainName: string;
-  domainAlias: string;
-  hostedZoneName: string;
-  hostedZoneId: string;
-}
-
 export class ResumeStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: ResumeStackProps) {
+  constructor(scope: Construct, id: string, props: cdk.StackProps) {
     super(scope, id, props);
 
     const configurator = new ResumeFrontendConfigurator(this, 'ResumeFrontendConfig');
@@ -27,13 +19,13 @@ export class ResumeStack extends cdk.Stack {
 
     const s3Origin: IOrigin = this.createS3Origin(s3RootBucket);
 
-    const certificate: ICertificate = this.findCertificate(props.certificateArn);
+    const certificate: ICertificate = this.findCertificate(params.certificateArn);
 
-    const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [params.domainName, props.domainAlias]);
+    const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [params.domainName, params.domainAlias]);
 
-    const hostedZone: IHostedZone = this.findHostedZone(props.hostedZoneName, props.hostedZoneId);
+    const hostedZone: IHostedZone = this.findHostedZone(params.hostedZoneName, params.hostedZoneId);
 
-    this.createDnsRecords(hostedZone, cloudFrontDistribution, props.domainAlias);
+    this.createDnsRecords(hostedZone, cloudFrontDistribution, params.domainAlias);
   }
 
   private createS3Bucket(): IBucket {
