@@ -10,6 +10,7 @@ export class ResumeStack extends cdk.Stack {
 
     const frontendConfigurator = new ResumeFrontendConfigurator(this, 'ResumeFrontendConfig');
     const frontendParams: IResumeFrontendParams = frontendConfigurator.getParams();
+    
     new ResumeFrontend(this, 'ResumeFrontend', frontendParams);
   }
 }
