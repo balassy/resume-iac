@@ -6,6 +6,7 @@ import { AllowedMethods, Distribution, Function, FunctionCode, FunctionEventType
 import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { ARecord, AaaaRecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+import { NagSuppressions } from 'cdk-nag';
 import { IResumeFrontendParams } from './resume-frontend.types';
 import path = require('path');
 
@@ -32,9 +33,17 @@ export class ResumeFrontend extends Construct {
 
   
   private createS3Bucket(): IBucket {
-    return new Bucket(this, 'ResumeFrontendRootBucket', {
-      accessControl: BucketAccessControl.PRIVATE
+    const bucket = new Bucket(this, 'ResumeFrontendRootBucket', {
+      accessControl: BucketAccessControl.PRIVATE,
+      enforceSSL: true
     });
+    
+    NagSuppressions.addResourceSuppressions(bucket, [{
+      id: 'AwsSolutions-S1',
+      reason: 'Disabling server acccess logs is accepted for this simple resume site in the free tier.'
+    }]);
+
+    return bucket;
   }
 
   private createS3Origin(bucket: IBucket) : IOrigin {
@@ -54,7 +63,7 @@ export class ResumeFrontend extends Construct {
   }
 
   private createCloudFrontDistribution(origin: IOrigin, certificate: ICertificate, domainNames: string[], requestHandler: IFunction): IDistribution {
-    return new Distribution(this, 'ResumeFrontendDistribution', {
+    const distribution = new Distribution(this, 'ResumeFrontendDistribution', {
       defaultBehavior: {
         origin,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -67,7 +76,20 @@ export class ResumeFrontend extends Construct {
       defaultRootObject: 'index.html',
       domainNames,
       certificate
-    });  
+    });
+
+    NagSuppressions.addResourceSuppressions(distribution, [{
+      id: 'AwsSolutions-CFR1',
+      reason: 'This personal introduction site does not require geo restriction.'
+    }, {
+      id: 'AwsSolutions-CFR2',
+      reason: 'This simple personal site in the free tier does not use WAF.'
+    }, {
+      id: 'AwsSolutions-CFR3',
+      reason: 'Disabling access logging is accepted for this simple resume site in the free tier.'
+    }])
+
+    return distribution;
   }
 
   private findCertificate(certificateArn: string): ICertificate {
