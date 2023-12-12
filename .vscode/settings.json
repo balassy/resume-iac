@@ -1,6 +1,8 @@
 {
   "files.exclude": {
-    "{lib,bin,test}/**/*.js": true,
+    "{bin,test}/**/*.js": true,
+    "{lib}/*.js": true,
+    "{lib}/{bootstrap,frontend}/*.js": true,
     "{lib,bin,test}/**/*.d.ts": true,
     "cdk.out": true,
     "node_modules": true,

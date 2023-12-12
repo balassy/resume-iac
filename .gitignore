@@ -16,4 +16,5 @@ cdk.out
 # Generated files
 *.js
 !jest.config.js
+!lib/**/cloudfront-handlers/*.js
 *.d.ts
