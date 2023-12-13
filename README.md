@@ -143,6 +143,10 @@ Trust relationships:
 | `npm run destroy`   | Delete the created resources from the AWS account.                         |
 | `npx cdk`           | Run any CDK commands, e.g. `npx cdk --version`                             |
 
+## Build and deployment pipeline
+
+![Deployment pipeline](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/balassy/resume-iac/main/pipeline.puml)
+
 ## Behind the scenes
 
 This project was created with:

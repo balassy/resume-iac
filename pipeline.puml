@@ -1,0 +1,78 @@
+@startuml Architecture
+
+' PlantUML reference: https://plantuml.com/deployment-diagram
+' Available AWS icons: https://github.com/awslabs/aws-icons-for-plantuml/blob/main/AWSSymbols.md
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/General/Documents.puml
+!include AWSPuml/General/Gear.puml
+!include AWSPuml/General/Genericdatabase.puml
+!include AWSPuml/General/GitRepository.puml
+!include AWSPuml/General/User.puml
+!include AWSPuml/Groups/AWSCloud.puml
+!include AWSPuml/Groups/AWSCloudAlt.puml
+!include AWSPuml/ManagementGovernance/CloudFormationStack.puml
+!include AWSPuml/ManagementGovernance/SystemsManagerParameterStore.puml
+
+' Groups are rectangles with a custom style using stereotype - need to hide.
+hide stereotype
+skinparam linetype ortho
+skinparam rectangle {
+    BackgroundColor AWS_BG_COLOR
+    BorderColor transparent
+    Shadowing false
+}
+
+' Define custom layout for icon and its caption.
+!procedure $AWSIcon($service, $line1, $line2="")
+rectangle "$AWSImg($service)\n<b>$line1</b>\n$line2"
+!endprocedure 
+
+$AWSIcon(User, "User", "GitHub User") as User
+$AWSIcon(User, "Admin", "GitHub User") as Admin
+
+' Hidden lines help getting a more understandable layout.
+User -[hidden]d- Admin 
+
+AWSCloudAltGroup(GitHub, "GitHub"){
+  $AWSIcon(GitRepository, "IaC repository", "GitHub") as Repo
+  User -r-> Repo: push
+  $AWSIcon(Gear, "Build", "GitHub Workflow") as BuildAction
+  Repo -r-> BuildAction: on push
+  $AWSIcon(Documents, "Build Artifact", "CloudFormation template\nenvironment neutral") as BuildArtifact
+  BuildAction -r-> BuildArtifact: output
+
+  $AWSIcon(Gear, "Deploy to Staging", "GitHub Workflow") as DeployToStagingAction
+  BuildArtifact -r-> DeployToStagingAction: on merge to main
+
+  $AWSIcon(Genericdatabase, "Credentials for accessing Staging AWS account", "GitHub Environment Secrets") as StagingEnvironmentSecrets
+  StagingEnvironmentSecrets -d-> DeployToStagingAction
+
+  $AWSIcon(Gear, "Deploy to Prod", "GitHub Workflow") as DeployToProdAction
+  Admin -r-> DeployToProdAction: manual approve
+  DeployToStagingAction -d-> DeployToProdAction
+
+  $AWSIcon(Genericdatabase, "Credentials for accessing Prod AWS account", "GitHub Environment Secrets") as ProdEnvironmentSecrets
+  ProdEnvironmentSecrets -l-> DeployToProdAction
+}
+
+AWSCloudGroup(StagingAccount, "AWS Staging Account"){
+  $AWSIcon(SystemsManagerParameterStore, "Stack Staging Parameters", "AWS Systems Manager\nParameter Store") as StagingParameterStore
+  StagingParameterStore -u-> DeployToStagingAction: read
+
+  $AWSIcon(CloudFormationStack, "Resume Stack", "AWS CloudFormation") as StagingResumeStack
+  DeployToStagingAction -d-> StagingResumeStack: create, update
+}
+
+AWSCloudGroup(ProdAccount, "AWS Prod Account"){
+  $AWSIcon(SystemsManagerParameterStore, "Stack Prod Parameters", "AWS Systems Manager\nParameter Store") as ProdParameterStore
+  ProdParameterStore -u-> DeployToProdAction: read
+
+  $AWSIcon(CloudFormationStack, "Resume Stack", "AWS CloudFormation") as ProdResumeStack
+  DeployToProdAction -d-> ProdResumeStack: create, update
+}
+
+StagingAccount -[hidden]d- ProdAccount
+
+@enduml
