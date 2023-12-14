@@ -1,0 +1,83 @@
+@startuml Architecture
+
+' PlantUML reference: https://plantuml.com/deployment-diagram
+' Available AWS icons: https://github.com/awslabs/aws-icons-for-plantuml/blob/main/AWSSymbols.md
+
+' The "all.puml" URLs are imported instead of the specific ones, because they contain the color definitions used by the custom groups.
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v17.0/dist
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/General/all.puml
+!include AWSPuml/Groups/all.puml
+!include AWSPuml/NetworkingContentDelivery/all.puml
+!include AWSPuml/SecurityIdentityCompliance/all.puml
+!include AWSPuml/Storage/all.puml
+
+' Groups are rectangles with a custom style using stereotype - need to hide.
+hide stereotype
+skinparam linetype ortho
+skinparam rectangle {
+    BackgroundColor AWS_BG_COLOR
+    BorderColor transparent
+    Shadowing false
+}
+
+' Define custom layout for icon and its caption.
+!procedure $AWSIcon($service, $line1, $line2="")
+rectangle "$AWSImg($service)\n<b>$line1</b>\n$line2"
+!endprocedure 
+
+' Custom group definitions.
+$AWSGroupColoring(Route53Group, $AWSColor(NetworkingContentDelivery))
+!define Route53Group(g_alias, g_label="AWS Route53") $AWSDefineGroup(g_alias, g_label, Route53, Route53Group)
+
+$AWSGroupColoring(Route53ZoneGroup, $AWSColor(NetworkingContentDelivery))
+!define Route53ZoneGroup(g_alias, g_label="Hosted Zone") $AWSDefineGroup(g_alias, g_label, Route53HostedZone, Route53ZoneGroup)
+
+$AWSGroupColoring(CloudFrontGroup, $AWSColor(NetworkingContentDelivery))
+!define CloudFrontGroup(g_alias, g_label="AWS CloudFront (CF)") $AWSDefineGroup(g_alias, g_label, CloudFront, CloudFrontGroup)
+
+$AWSGroupColoring(CertificateManagerGroup, $AWSColor(SecurityIdentityCompliance))
+!define CertificateManagerGroup(g_alias, g_label="AWS Certificate Manager (ACM)") $AWSDefineGroup(g_alias, g_label, CertificateManager, CertificateManagerGroup)
+
+$AWSGroupColoring(S3Group, $AWSColor(Storage))
+!define S3Group(g_alias, g_label="AWS S3") $AWSDefineGroup(g_alias, g_label, SimpleStorageService , S3Group)
+
+' Content starts here.
+$AWSIcon(User, "User", "Browser") as User
+
+AWSCloudGroup(CloudAccount, "AWS Account"){
+  Route53Group(Route53) {
+    Route53ZoneGroup(zone) {
+      $AWSIcon(Route53RouteTable, "A and CNAME records") as DnsRecords
+      $AWSIcon(Route53RouteTable, "CNAME records for certificate validation") as DnsCertificateRecords
+    }
+  }
+
+  CloudFrontGroup(CloudFront) {
+    $AWSIcon(CloudFrontDownloadDistribution, "Distribution (redirects to https)") as Distribution
+    $AWSIcon(CloudFrontFunctions, "Viewer Request handler (redirects to default doc and apex domain)", "CloudFront Function") as RequestHandler
+    Distribution -u-> RequestHandler: associate
+  }
+
+  CertificateManagerGroup(ACM) {
+    $AWSIcon(CertificateManagerCertificateAuthority, "Certificate with multiple domains") as Certificate
+  }
+
+  S3Group(S3) {
+    $AWSIcon(SimpleStorageServiceBucketWithObjects, "Static files", "S3 Bucket") as Bucket
+  }
+
+  User -r-> DnsRecords: resolve host name
+  User -r-> Distribution: get content
+  Distribution --> DnsRecords: alternate domain names
+  Distribution --> Certificate: custom SSL certificate 
+  Distribution --> Bucket: origin
+  Certificate --> DnsCertificateRecords: validation
+
+  ' Hidden lines for better layout.
+  Route53 -[hidden]r- ACM
+  DnsRecords -[hidden]d- DnsCertificateRecords
+}
+
+@enduml

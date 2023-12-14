@@ -1,9 +1,9 @@
-@startuml Architecture
+@startuml Pipeline
 
 ' PlantUML reference: https://plantuml.com/deployment-diagram
 ' Available AWS icons: https://github.com/awslabs/aws-icons-for-plantuml/blob/main/AWSSymbols.md
 
-!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v14.0/dist
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v17.0/dist
 !include AWSPuml/AWSCommon.puml
 !include AWSPuml/General/Documents.puml
 !include AWSPuml/General/Gear.puml

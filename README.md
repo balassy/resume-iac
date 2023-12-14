@@ -143,9 +143,20 @@ Trust relationships:
 | `npm run destroy`   | Delete the created resources from the AWS account.                         |
 | `npx cdk`           | Run any CDK commands, e.g. `npx cdk --version`                             |
 
-## Build and deployment pipeline
 
-![Deployment pipeline](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/balassy/resume-iac/main/pipeline.puml)
+## How it works
+
+NOTE: If no diagrams appear here then most probably the PlantUML Proxy Service timed out and could not render images from the source `.puml` files. In that case please refresh the page a little bit later.
+
+IMPORTANT: If you use the [jebbs.plantuml](https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml) Visual Studio Code extension to render PlantUML during development, and you see the diagrams rendered with dark theme instead of light theme then you probably have an outdated version of PlantUML. You can upgrade it by [downloading](https://plantuml.com/download) the latest `plantuml.jar` and overwriting the old one in the `$HOME/.vscode/extensions/jebbs.plantuml-<version>` folder. To display the version number you can add `Title %version()` to your `.puml` file.
+
+### Build and deployment pipeline
+
+![Build and deployment pipeline](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/balassy/resume-iac/main/pipeline.puml)
+
+### Cloud architecture
+
+![Cloud architecture](http://www.plantuml.com/plantuml/proxy?src=https://raw.githubusercontent.com/balassy/resume-iac/main/architecture.puml)
 
 ## Behind the scenes
 
