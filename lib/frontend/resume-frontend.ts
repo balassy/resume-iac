@@ -109,7 +109,7 @@ export class ResumeFrontend extends Construct {
       target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution))      
     });
 
-    new AaaaRecord(this, 'ResumeFrontendDnsAliasRecord', {
+    new ARecord(this, 'ResumeFrontendDnsAliasRecord', {
       zone,
       target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution)),
       recordName: `${domainAlias}.`     
