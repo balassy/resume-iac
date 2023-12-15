@@ -11,7 +11,7 @@
     "watch": "tsc -w",
     "diff": "cdk diff ResumeStack",
     "deploy": "cdk deploy ResumeStack",
-    "deploy:bootstrap": "cdk deploy ResumeBootstrapStack",
+    "deploy:bootstrap": "cdk deploy ResumeBootstrapStack --parameters gitHubUserName=balassy --parameters gitHubRepoName=resume-iac",
     "destroy": "cdk destroy ResumeStack",
     "test": "jest",
     "cdk": "cdk"
