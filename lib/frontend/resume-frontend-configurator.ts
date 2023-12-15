@@ -61,6 +61,11 @@ export class ResumeFrontendConfigurator extends Construct {
         effect: Effect.ALLOW
       })],
     });
+    
+    NagSuppressions.addResourceSuppressions(managedPolicy, [{
+      id: 'AwsSolutions-IAM5',
+      reason: 'Access is granted to perform all CDK operations.'
+    }]);
 
     const principal = new WebIdentityPrincipal(
       identityProvider.openIdConnectProviderArn,
@@ -78,13 +83,11 @@ export class ResumeFrontendConfigurator extends Construct {
       description: 'The permissions assigned to the GitHub Actions workflow.',
       assumedBy: principal,
     });
-
     role.addManagedPolicy(managedPolicy);
 
-    NagSuppressions.addResourceSuppressions(managedPolicy, [{
-      id: 'AwsSolutions-IAM5',
-      reason: 'Access is granted to perform all CDK operations.'
-    }]);
+    new cdk.CfnOutput(this, 'ResumeOutputAwsCdkRoleArn', {
+      value: role.roleArn
+    }).overrideLogicalId('AwsCdkRoleArn');
   }
 
   private createAccessPermissionsForFrontendUpdate() {
