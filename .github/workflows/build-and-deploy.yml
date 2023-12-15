@@ -6,7 +6,7 @@ on:
 
 # Secrets:
 #   AWS_REGION: "us-east-1"
-#   AWS_STAGING_CDK_ROLE_ARN: "arn:aws:iam::1234567890:role/example-role"
+#   AWS_CDK_ROLE_ARN: "arn:aws:iam::1234567890:role/example-role" for Staging and Production environments
 
 permissions:
   id-token: write   # This is required for requesting the JWT for AWS Actions

@@ -11,11 +11,11 @@ Infrastructure as a Code configuration using [AWS Cloud Development Kit (CDK)](h
 1. Install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 2. Log in to the account: `aws sso login`
 3. Verify caller identity: `aws sts get-caller-identity`
-4. List buckets: `aws s3 ls`
+4. Verify access with listing buckets: `aws s3 ls`
 
 ## Initialize the AWS account for the CDK
 
-### Bootstrap
+### CDK bootstrap
 
 This will create the S3 bucket and related objects required for CDK metadata:
 
@@ -26,7 +26,7 @@ npx cdk bootstrap --tags project=resume
 It it fails with `Unable to resolve AWS account to use.` you probably logged in to the AWS CLI with a named profiled instead of the default. In this case set these environment variables:
 
 ```powershell
-$env:CDK_DEFAULT_ACCOUNT=361385831802
+$env:CDK_DEFAULT_ACCOUNT=123412341234
 $env:CDK_DEFAULT_REGION='us-east-1'
 ```
 
@@ -42,7 +42,7 @@ Similarly, **specify the profile** in all npm script that calls the CDK:
 npm run diff -- --profile my-sso-profile-name
 ```
 
-### Undo bootstrap
+### Undo CDK bootstrap
 
 At the moment [there is no single command](https://github.com/aws/aws-cdk/issues/986) to delete every objects the bootstrap command created, so you have to do that manually.
 
@@ -71,6 +71,25 @@ aws s3 rb s3://TODO-ADD-BUCKET-NAME --force
 ```
 
 ## Set up AWS access for GitHub Actions
+
+### Set up with CDK
+
+You can use the `ResumeBootstrapStack` in this project to create objects in the AWS account for infrastructure and website deployment directly from GitHub Actions.
+
+1. Build the source code: `npm run build:tsc`
+
+2. Build the CloudFormation template: `npm run build:cdk: bootstrap`
+
+3. **IMPORTANT!** Before running the following command check it in `package.json` because it contains hardcoded GitHub user and repository names as CDK input parameters! 
+
+4. Deploy to the AWS account: `npm run deploy:bootstrap`
+
+5. Note the output parameters from the deployment. They must be set as GitHub Actions secrets in this repository:
+
+  - Environment secrets: `AWS_CDK_ROLE_ARN` for `Staging` and `Production` environments
+  - Repository secrets: `AWS_REGION`
+
+### Manual setup
 
 For detailed steps follow [this](https://aws.amazon.com/blogs/security/use-iam-roles-to-connect-github-actions-to-actions-in-aws/) guide.
 
