@@ -1,0 +1,70 @@
+@startuml Bootstrap
+
+' PlantUML reference: https://plantuml.com/deployment-diagram
+' Available AWS icons: https://github.com/awslabs/aws-icons-for-plantuml/blob/main/AWSSymbols.md
+
+' The "all.puml" URLs are imported instead of the specific ones, because they contain the color definitions used by the custom groups.
+
+!define AWSPuml https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v17.0/dist
+!include AWSPuml/AWSCommon.puml
+!include AWSPuml/General/all.puml
+!include AWSPuml/Groups/all.puml
+!include AWSPuml/ManagementGovernance/all.puml
+!include AWSPuml/SecurityIdentityCompliance/all.puml
+
+' Groups are rectangles with a custom style using stereotype - need to hide.
+hide stereotype
+skinparam linetype ortho
+skinparam rectangle {
+    BackgroundColor AWS_BG_COLOR
+    BorderColor transparent
+    Shadowing false
+}
+
+' Define custom layout for icon and its caption.
+!procedure $AWSIcon($service, $line1, $line2="")
+rectangle "$AWSImg($service)\n<b>$line1</b>\n$line2"
+!endprocedure 
+
+' Custom group definitions.
+$AWSGroupColoring(CloudFormationGroup, $AWSColor(ManagementGovernance))
+!define CloudFormationGroup(g_alias, g_label="AWS CloudFormation") $AWSDefineGroup(g_alias, g_label, CloudFormation, CloudFormationGroup)
+
+$AWSGroupColoring(SystemsManagerGroup, $AWSColor(ManagementGovernance))
+!define SystemsManagerGroup(g_alias, g_label="AWS Systems Manager") $AWSDefineGroup(g_alias, g_label, SystemsManager, SystemsManagerGroup)
+
+$AWSGroupColoring(IamGroup, $AWSColor(SecurityIdentityCompliance))
+!define IamGroup(g_alias, g_label="AWS IAM") $AWSDefineGroup(g_alias, g_label, IdentityandAccessManagement, IamGroup)
+
+
+' Content starts here.
+$AWSIcon(User, "User", "CDK") as User
+
+$AWSIcon(CloudFormationTemplate , "ResumeBootstrap", "CloudFormation Template") as CfnTemplate
+
+User --> CfnTemplate: inputs: GitHub user and repo name
+User <-- CfnTemplate: outputs: AWS object names, ARNs
+
+AWSCloudGroup(CloudAccount, "AWS Account"){
+  CloudFormationGroup(CloudFormation) {
+    $AWSIcon(CloudFormationStack , "ResumeBootstrapStack", "CloudFormation Stack") as CfnStack
+  }
+
+  SystemsManagerGroup(SystemsManager) {
+    $AWSIcon(SystemsManagerParameterStore, "GitHub Actions configuration", "Parameter Store" ) as Parameters
+  }
+
+  IamGroup(Iam) {
+    $AWSIcon(IdentityAccessManagementRole, "ResumeIaCDeployer", "Role") as IamRole
+    $AWSIcon(IdentityAccessManagementPermissions, "ResumeIaCDeployPolicy", "Policy") as IamPolicy
+    $AWSIcon(IdentityAccessManagementAWSSTS, "GitHub OIDC", "Identity Provider") as IamIdentityProvider
+    IamRole -r- IamPolicy
+    IamRole -l- IamIdentityProvider
+  }
+
+  CfnTemplate --> CfnStack: deploy
+  CfnStack --> SystemsManager
+  CfnStack --> Iam
+}
+
+@enduml
