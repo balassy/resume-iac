@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import { Effect, IManagedPolicy, ManagedPolicy, PolicyStatement, Role, WebIdentityPrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, IBucket, BucketAccessControl } from 'aws-cdk-lib/aws-s3';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { AllowedMethods, Distribution, Function, FunctionCode, FunctionEventType, IDistribution, IFunction, IOrigin, OriginAccessIdentity, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
@@ -9,8 +10,12 @@ import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { NagSuppressions } from 'cdk-nag';
 import { IResumeFrontendParams } from './resume-frontend.types';
 import path = require('path');
+import { AccountId, GitHubUserName, GitHubRepoName, Arn } from '../types';
 
 export interface IResumeFrontendProps extends IResumeFrontendParams {
+  accountId: AccountId,
+  gitHubUserName: GitHubUserName,
+  gitHubRepoName: GitHubRepoName
 };
 
 export class ResumeFrontend extends Construct {
@@ -24,11 +29,13 @@ export class ResumeFrontend extends Construct {
     const certificate: ICertificate = this.findCertificate(props.certificateArn);
 
     const cloudFrontRequestHandlerFunction: IFunction = this.createCloudFrontRequestHandlerFunction();
-    const cloudFrontDistribution:IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [props.domainName, props.domainAlias], cloudFrontRequestHandlerFunction);
+    const cloudFrontDistribution: IDistribution = this.createCloudFrontDistribution(s3Origin, certificate, [props.domainName, props.domainAlias], cloudFrontRequestHandlerFunction);
 
     const hostedZone: IHostedZone = this.findHostedZone(props.hostedZoneName, props.hostedZoneId);
 
     this.createDnsRecords(hostedZone, cloudFrontDistribution, props.domainAlias);
+
+    this.createUploadPermissions(s3RootBucket, cloudFrontDistribution, props.accountId, props.gitHubUserName, props.gitHubRepoName);
   }
 
   
@@ -42,6 +49,10 @@ export class ResumeFrontend extends Construct {
       id: 'AwsSolutions-S1',
       reason: 'Disabling server acccess logs is accepted for this simple resume site in the free tier.'
     }]);
+
+    new cdk.CfnOutput(this, 'ResumeOutputAwsBucketName', {
+      value: bucket.bucketName
+    }).overrideLogicalId('AwsBucketName');
 
     return bucket;
   }
@@ -89,6 +100,10 @@ export class ResumeFrontend extends Construct {
       reason: 'Disabling access logging is accepted for this simple resume site in the free tier.'
     }])
 
+    new cdk.CfnOutput(this, 'ResumeOutputAwsCloudfrontDistributionId', {
+      value: distribution.distributionId
+    }).overrideLogicalId('AwsCloudfrontDistributionId');
+
     return distribution;
   }
 
@@ -114,5 +129,75 @@ export class ResumeFrontend extends Construct {
       target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution)),
       recordName: `${domainAlias}.`     
     });
+  }
+
+  private createUploadPermissions(bucket: IBucket, cloudFrontDistribution: IDistribution, accountId: AccountId, gitHubUserName: GitHubUserName, gitHubRepoName: GitHubRepoName) {
+    const cloudFrontDistributionArn: string = `arn:aws:cloudfront::${accountId}:distribution/${cloudFrontDistribution.distributionId}`;
+    const openIdConnectProviderArn: string = `arn:aws:iam::${accountId}:oidc-provider/token.actions.githubusercontent.com`;
+
+    const policy = this.createUploaderPolicy(bucket.bucketArn, cloudFrontDistributionArn);
+    this.createUploaderRole(policy, openIdConnectProviderArn, gitHubUserName, gitHubRepoName);
+  }
+
+  private createUploaderPolicy(bucketArn: Arn, cloudFrontDistributionArn: Arn): IManagedPolicy {
+    const policy = new ManagedPolicy(this, 'ResumeFrontendUploadPolicy', {
+      description: 'All permissions required to update the resume frontend application.',
+      statements: [
+        new PolicyStatement({
+          sid: 'UploadFiles',
+          effect: Effect.ALLOW,
+          actions: [
+            's3:*'
+          ],
+          resources: [
+            bucketArn,
+            `${bucketArn}/*`
+          ]
+        }),
+        new PolicyStatement({
+          sid: 'InvalidateCache',
+          effect: Effect.ALLOW,
+          actions: [
+            'cloudfront:CreateInvalidation',
+            'cloudfront:GetInvalidation'
+          ],
+          resources: [
+            cloudFrontDistributionArn
+          ]
+        })
+      ]
+    });
+
+    // TODO: Use least privilege.
+    NagSuppressions.addResourceSuppressions(policy, [{
+      id: 'AwsSolutions-IAM5',
+      reason: 'Access is granted to perform all operations on the bucket.'
+    }]);
+
+    return policy;
+  }
+
+  private createUploaderRole(policy: IManagedPolicy, openIdConnectProviderArn: Arn, gitHubUserName: GitHubUserName, gitHubRepoName: GitHubRepoName) {
+    const principal = new WebIdentityPrincipal(
+      openIdConnectProviderArn,
+      {
+        StringEquals: {
+          'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
+        },
+        StringLike: {
+          'token.actions.githubusercontent.com:sub': `repo:${gitHubUserName}/${gitHubRepoName}:*`
+        }
+      }
+    );   
+
+    const role = new Role(this, 'ResumeFrontendUploader', {
+      description: 'The permissions assigned to the GitHub Actions workflow that updates the frontend.',
+      assumedBy: principal,
+      managedPolicies: [ policy ]
+    });
+
+    new cdk.CfnOutput(this, 'ResumeOutputAwsUploadRoleArn', {
+      value: role.roleArn
+    }).overrideLogicalId('AwsUploadRoleArn');
   }
 }
