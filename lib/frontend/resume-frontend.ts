@@ -40,7 +40,7 @@ export class ResumeFrontend extends Construct {
 
   
   private createS3Bucket(): IBucket {
-    const bucket = new Bucket(this, 'ResumeFrontendRootBucket', {
+    const bucket = new Bucket(this, 'RootBucket', {
       accessControl: BucketAccessControl.PRIVATE,
       enforceSSL: true
     });
@@ -58,14 +58,14 @@ export class ResumeFrontend extends Construct {
   }
 
   private createS3Origin(bucket: IBucket) : IOrigin {
-    const originAccessIdentity = new OriginAccessIdentity(this, 'ResumeFrontendOriginAccessControl');
+    const originAccessIdentity = new OriginAccessIdentity(this, 'OriginAccessControl');
     return new S3Origin(bucket, {
       originAccessIdentity
     });
   }
 
   private createCloudFrontRequestHandlerFunction(): IFunction {
-    return new Function(this, 'ResumeFrontendDistributionDefaultDocHandler', {
+    return new Function(this, 'DistributionDefaultDocHandler', {
       code: FunctionCode.fromFile({
         filePath: path.join(__dirname, 'cloudfront-handlers', 'request-handler.js')
       }),
@@ -74,7 +74,7 @@ export class ResumeFrontend extends Construct {
   }
 
   private createCloudFrontDistribution(origin: IOrigin, certificate: ICertificate, domainNames: string[], requestHandler: IFunction): IDistribution {
-    const distribution = new Distribution(this, 'ResumeFrontendDistribution', {
+    const distribution = new Distribution(this, 'Distribution', {
       defaultBehavior: {
         origin,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -108,23 +108,23 @@ export class ResumeFrontend extends Construct {
   }
 
   private findCertificate(certificateArn: string): ICertificate {
-    return Certificate.fromCertificateArn(this, 'ResumeFrontendCertificate', certificateArn);
+    return Certificate.fromCertificateArn(this, 'Certificate', certificateArn);
   }
 
   private findHostedZone(zoneName: string, hostedZoneId: string): IHostedZone {
-    return HostedZone.fromHostedZoneAttributes(this, 'ResumeFrontendDnsHostedZone', {
+    return HostedZone.fromHostedZoneAttributes(this, 'DnsHostedZone', {
       zoneName,
       hostedZoneId
     });
   }
 
   private createDnsRecords(zone: IHostedZone, cloudFrontDistribution: IDistribution, domainAlias: string) {
-    new ARecord(this, 'ResumeFrontendDnsARecord', {
+    new ARecord(this, 'DnsARecord', {
       zone,
       target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution))      
     });
 
-    new ARecord(this, 'ResumeFrontendDnsAliasRecord', {
+    new ARecord(this, 'DnsAliasRecord', {
       zone,
       target: RecordTarget.fromAlias(new CloudFrontTarget(cloudFrontDistribution)),
       recordName: `${domainAlias}.`     
@@ -140,7 +140,7 @@ export class ResumeFrontend extends Construct {
   }
 
   private createUploaderPolicy(bucketArn: Arn, cloudFrontDistributionArn: Arn): IManagedPolicy {
-    const policy = new ManagedPolicy(this, 'ResumeFrontendUploadPolicy', {
+    const policy = new ManagedPolicy(this, 'UploaderPolicy', {
       description: 'All permissions required to update the resume frontend application.',
       statements: [
         new PolicyStatement({
@@ -190,7 +190,7 @@ export class ResumeFrontend extends Construct {
       }
     );   
 
-    const role = new Role(this, 'ResumeFrontendUploader', {
+    const role = new Role(this, 'UploaderRole', {
       description: 'The permissions assigned to the GitHub Actions workflow that updates the frontend.',
       assumedBy: principal,
       managedPolicies: [ policy ]
