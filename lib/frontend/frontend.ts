@@ -8,18 +8,12 @@ import { Certificate, ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { ARecord, HostedZone, IHostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
 import { NagSuppressions } from 'cdk-nag';
-import { IResumeFrontendParams } from './resume-frontend.types';
+import { IFrontendProps } from './types';
 import path = require('path');
 import { AccountId, GitHubUserName, GitHubRepoName, Arn } from '../types';
 
-export interface IResumeFrontendProps extends IResumeFrontendParams {
-  accountId: AccountId,
-  gitHubUserName: GitHubUserName,
-  gitHubRepoName: GitHubRepoName
-};
-
-export class ResumeFrontend extends Construct {
-  constructor(scope: Construct, id: string, props: IResumeFrontendProps) {
+export class Frontend extends Construct {
+  constructor(scope: Construct, id: string, props: IFrontendProps) {
     super(scope, id);
 
     const s3RootBucket: IBucket = this.createS3Bucket();
@@ -50,7 +44,7 @@ export class ResumeFrontend extends Construct {
       reason: 'Disabling server acccess logs is accepted for this simple resume site in the free tier.'
     }]);
 
-    new cdk.CfnOutput(this, 'ResumeOutputAwsBucketName', {
+    new cdk.CfnOutput(this, 'OutputAwsBucketName', {
       value: bucket.bucketName
     }).overrideLogicalId('AwsBucketName');
 
@@ -100,7 +94,7 @@ export class ResumeFrontend extends Construct {
       reason: 'Disabling access logging is accepted for this simple resume site in the free tier.'
     }])
 
-    new cdk.CfnOutput(this, 'ResumeOutputAwsCloudfrontDistributionId', {
+    new cdk.CfnOutput(this, 'OutputAwsCloudfrontDistributionId', {
       value: distribution.distributionId
     }).overrideLogicalId('AwsCloudfrontDistributionId');
 
@@ -196,7 +190,7 @@ export class ResumeFrontend extends Construct {
       managedPolicies: [ policy ]
     });
 
-    new cdk.CfnOutput(this, 'ResumeOutputAwsUploadRoleArn', {
+    new cdk.CfnOutput(this, 'OutputAwsUploadRoleArn', {
       value: role.roleArn
     }).overrideLogicalId('AwsUploadRoleArn');
   }
