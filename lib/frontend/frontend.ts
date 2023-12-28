@@ -141,7 +141,11 @@ export class Frontend extends Construct {
           sid: 'UploadFiles',
           effect: Effect.ALLOW,
           actions: [
-            's3:*'
+            's3:DeleteObject',
+            's3:GetBucketLocation',
+            's3:GetObject',
+            's3:ListBucket',
+            's3:PutObject'
           ],
           resources: [
             bucketArn,
@@ -162,10 +166,10 @@ export class Frontend extends Construct {
       ]
     });
 
-    // TODO: Use least privilege.
+    // In theory the appliesTo property would allow resource level suppression, but could not make it work by ARN :(
     NagSuppressions.addResourceSuppressions(policy, [{
       id: 'AwsSolutions-IAM5',
-      reason: 'Access is granted to perform all operations on the bucket.'
+      reason: 'Access is granted to perform all sync operations on the bucket and its items.'
     }]);
 
     return policy;
