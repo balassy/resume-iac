@@ -134,14 +134,18 @@ export class Frontend extends Construct {
   }
 
   private createUploaderPolicy(bucketArn: Arn, cloudFrontDistributionArn: Arn): IManagedPolicy {
-    const policy = new ManagedPolicy(this, 'UploaderPolicy', {
+    return new ManagedPolicy(this, 'UploaderPolicy', {
       description: 'All permissions required to update the resume frontend application.',
       statements: [
         new PolicyStatement({
           sid: 'UploadFiles',
           effect: Effect.ALLOW,
           actions: [
-            's3:*'
+            's3:DeleteObject',
+            's3:GetBucketLocation',
+            's3:GetObject',
+            's3:ListBucket',
+            's3:PutObject'
           ],
           resources: [
             bucketArn,
@@ -161,14 +165,6 @@ export class Frontend extends Construct {
         })
       ]
     });
-
-    // TODO: Use least privilege.
-    NagSuppressions.addResourceSuppressions(policy, [{
-      id: 'AwsSolutions-IAM5',
-      reason: 'Access is granted to perform all operations on the bucket.'
-    }]);
-
-    return policy;
   }
 
   private createUploaderRole(policy: IManagedPolicy, openIdConnectProviderArn: Arn, gitHubUserName: GitHubUserName, gitHubRepoName: GitHubRepoName) {
