@@ -166,13 +166,11 @@ export class Frontend extends Construct {
       ]
     });
 
+    // In theory the appliesTo property would allow resource level suppression, but could not make it work by ARN :(
     NagSuppressions.addResourceSuppressions(policy, [{
       id: 'AwsSolutions-IAM5',
-      reason: 'Access is granted to perform all sync operations on the bucket and its items.',
-      appliesTo: [
-        { regex: /^Resource::(.*):FrontendRootBucket\/\*$/g.toString() }
-      ]
-    }], true);
+      reason: 'Access is granted to perform all sync operations on the bucket and its items.'
+    }]);
 
     return policy;
   }
