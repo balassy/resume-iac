@@ -11,7 +11,7 @@ export class BootstrapStack extends cdk.Stack {
 
     const frontendConfigurator = new FrontendConfigurator(this, 'FrontendConfig');
     frontendConfigurator.createParamsWithDefaults();
-    frontendConfigurator.createAccessPermissions(gitHubUserName, gitHubRepoName);
+    frontendConfigurator.createDeployPermissions(gitHubUserName, gitHubRepoName);
 
     new cdk.CfnOutput(this, 'OutputAwsRegion', {
       value: this.region
