@@ -1,9 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
-import { Effect, IOpenIdConnectProvider, ManagedPolicy, OpenIdConnectProvider, PolicyStatement, Role, WebIdentityPrincipal } from 'aws-cdk-lib/aws-iam';
+import { Effect, OpenIdConnectProvider, PolicyDocument, PolicyStatement, Role, WebIdentityPrincipal } from 'aws-cdk-lib/aws-iam';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from "constructs";
 import { IFrontendParams } from './types';
+import { GitHubRepoName, GitHubUserName } from '../types';
 
 const ParamNames = {
   DOMAIN_NAME: '/Resume/Frontend/DomainName',
@@ -36,7 +37,7 @@ export class FrontendConfigurator extends Construct {
     new StringParameter(this, 'HostedZoneId', { parameterName: ParamNames.HOSTEDZONE_ID, stringValue: 'Z04057...' });
   }
 
-  public createAccessPermissions(gitHubUserName: string, gitHubRepoName: string) {
+  public createDeployPermissions(gitHubUserName: GitHubUserName, gitHubRepoName: GitHubRepoName) {
     const gitHubIdentityProvider = new OpenIdConnectProvider(this, 'ResumeGitHubIdentityProvider', {
       url: 'https://token.actions.githubusercontent.com',
       clientIds: [ // aka. Audiences
@@ -44,13 +45,7 @@ export class FrontendConfigurator extends Construct {
       ]
     });
 
-    this.createAccessPermissionsForIaCUpdate(gitHubIdentityProvider, gitHubUserName, gitHubRepoName);
-    this.createAccessPermissionsForFrontendUpdate();
-  }
-
-  private createAccessPermissionsForIaCUpdate(identityProvider: IOpenIdConnectProvider, gitHubUserName: string, gitHubRepoName: string) {
-    const managedPolicy = new ManagedPolicy(this, 'IaCDeployPolicy', {
-      description: 'Permissions required to IaC update from CDK.',
+    const policy = new PolicyDocument({
       statements: [new PolicyStatement({
         actions: [
           'sts:AssumeRole',
@@ -59,16 +54,11 @@ export class FrontendConfigurator extends Construct {
           'arn:aws:iam::*:role/cdk-*'
         ],
         effect: Effect.ALLOW
-      })],
+      })]      
     });
     
-    NagSuppressions.addResourceSuppressions(managedPolicy, [{
-      id: 'AwsSolutions-IAM5',
-      reason: 'Access is granted to perform all CDK operations.'
-    }]);
-
     const principal = new WebIdentityPrincipal(
-      identityProvider.openIdConnectProviderArn,
+      gitHubIdentityProvider.openIdConnectProviderArn,
       {
         StringEquals: {
           'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
@@ -82,15 +72,18 @@ export class FrontendConfigurator extends Construct {
     const role = new Role(this, 'IaCDeployer', {
       description: 'The permissions assigned to the GitHub Actions workflow.',
       assumedBy: principal,
+      inlinePolicies: {
+        policy
+      }
     });
-    role.addManagedPolicy(managedPolicy);
+
+    NagSuppressions.addResourceSuppressions(role, [{
+      id: 'AwsSolutions-IAM5',
+      reason: 'Access is granted to perform all CDK operations.'
+    }]);
 
     new cdk.CfnOutput(this, 'OutputAwsCdkRoleArn', {
       value: role.roleArn
     }).overrideLogicalId('AwsCdkRoleArn');
-  }
-
-  private createAccessPermissionsForFrontendUpdate() {
-
   }
 }

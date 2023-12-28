@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { Effect, IManagedPolicy, ManagedPolicy, PolicyStatement, Role, WebIdentityPrincipal } from 'aws-cdk-lib/aws-iam';
+import { Effect, IManagedPolicy, ManagedPolicy, PolicyDocument, PolicyStatement, Role, WebIdentityPrincipal } from 'aws-cdk-lib/aws-iam';
 import { Bucket, IBucket, BucketAccessControl } from 'aws-cdk-lib/aws-s3';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { AllowedMethods, Distribution, Function, FunctionCode, FunctionEventType, IDistribution, IFunction, IOrigin, OriginAccessIdentity, ViewerProtocolPolicy } from 'aws-cdk-lib/aws-cloudfront';
@@ -31,7 +31,6 @@ export class Frontend extends Construct {
 
     this.createUploadPermissions(s3RootBucket, cloudFrontDistribution, props.accountId, props.gitHubUserName, props.gitHubRepoName);
   }
-
   
   private createS3Bucket(): IBucket {
     const bucket = new Bucket(this, 'RootBucket', {
@@ -133,9 +132,8 @@ export class Frontend extends Construct {
     this.createUploaderRole(policy, openIdConnectProviderArn, gitHubUserName, gitHubRepoName);
   }
 
-  private createUploaderPolicy(bucketArn: Arn, cloudFrontDistributionArn: Arn): IManagedPolicy {
-    const policy = new ManagedPolicy(this, 'UploaderPolicy', {
-      description: 'All permissions required to update the resume frontend application.',
+  private createUploaderPolicy(bucketArn: Arn, cloudFrontDistributionArn: Arn): PolicyDocument {
+    return new PolicyDocument({
       statements: [
         new PolicyStatement({
           sid: 'UploadFiles',
@@ -165,17 +163,9 @@ export class Frontend extends Construct {
         })
       ]
     });
-
-    // In theory the appliesTo property would allow resource level suppression, but could not make it work by ARN :(
-    NagSuppressions.addResourceSuppressions(policy, [{
-      id: 'AwsSolutions-IAM5',
-      reason: 'Access is granted to perform all sync operations on the bucket and its items.'
-    }]);
-
-    return policy;
   }
 
-  private createUploaderRole(policy: IManagedPolicy, openIdConnectProviderArn: Arn, gitHubUserName: GitHubUserName, gitHubRepoName: GitHubRepoName) {
+  private createUploaderRole(policy: PolicyDocument, openIdConnectProviderArn: Arn, gitHubUserName: GitHubUserName, gitHubRepoName: GitHubRepoName) {
     const principal = new WebIdentityPrincipal(
       openIdConnectProviderArn,
       {
@@ -191,8 +181,16 @@ export class Frontend extends Construct {
     const role = new Role(this, 'UploaderRole', {
       description: 'The permissions assigned to the GitHub Actions workflow that updates the frontend.',
       assumedBy: principal,
-      managedPolicies: [ policy ]
+      inlinePolicies: {
+        policy
+      }
     });
+
+    // In theory the appliesTo property would allow resource level suppression, but could not make it work by ARN :(
+      NagSuppressions.addResourceSuppressions(role, [{
+        id: 'AwsSolutions-IAM5',
+        reason: 'Access is granted to perform all sync operations on the bucket and its items.'
+      }]);
 
     new cdk.CfnOutput(this, 'OutputAwsUploadRoleArn', {
       value: role.roleArn
