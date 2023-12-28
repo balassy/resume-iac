@@ -3,7 +3,7 @@ import { Effect, IOpenIdConnectProvider, ManagedPolicy, OpenIdConnectProvider, P
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
 import { NagSuppressions } from 'cdk-nag';
 import { Construct } from "constructs";
-import { IResumeFrontendParams } from './resume-frontend.types';
+import { IFrontendParams } from './types';
 
 const ParamNames = {
   DOMAIN_NAME: '/Resume/Frontend/DomainName',
@@ -13,12 +13,12 @@ const ParamNames = {
   HOSTEDZONE_ID: '/Resume/Frontend/HostedZoneId',
 };
 
-export class ResumeFrontendConfigurator extends Construct {
+export class FrontendConfigurator extends Construct {
   constructor(scope: Construct, id: string ) {
     super(scope, id);
   }
 
-  public getParams(): IResumeFrontendParams {
+  public getParams(): IFrontendParams {
     return {
       domainName: StringParameter.valueForStringParameter(this, ParamNames.DOMAIN_NAME),
       domainAlias: StringParameter.valueForStringParameter(this, ParamNames.DOMAIN_ALIAS),
@@ -29,11 +29,11 @@ export class ResumeFrontendConfigurator extends Construct {
   }
 
   public createParamsWithDefaults() {
-    new StringParameter(this, 'ResumeFrontendParamDomainName', { parameterName: ParamNames.DOMAIN_NAME, stringValue: 'example.com' });
-    new StringParameter(this, 'ResumeFrontendParamDomainAlias', { parameterName: ParamNames.DOMAIN_ALIAS, stringValue: 'www.example.com' });
-    new StringParameter(this, 'ResumeFrontendParamCertificateArn', { parameterName: ParamNames.CERTIFICATE_ARN, stringValue: 'arn:aws:acm:us-east-1:...' });
-    new StringParameter(this, 'ResumeFrontendParamHostedZoneName', { parameterName: ParamNames.HOSTEDZONE_NAME, stringValue: 'example.com' });
-    new StringParameter(this, 'ResumeFrontendParamHostedZoneId', { parameterName: ParamNames.HOSTEDZONE_ID, stringValue: 'Z04057...' });
+    new StringParameter(this, 'DomainName', { parameterName: ParamNames.DOMAIN_NAME, stringValue: 'example.com' });
+    new StringParameter(this, 'DomainAlias', { parameterName: ParamNames.DOMAIN_ALIAS, stringValue: 'www.example.com' });
+    new StringParameter(this, 'CertificateArn', { parameterName: ParamNames.CERTIFICATE_ARN, stringValue: 'arn:aws:acm:us-east-1:...' });
+    new StringParameter(this, 'HostedZoneName', { parameterName: ParamNames.HOSTEDZONE_NAME, stringValue: 'example.com' });
+    new StringParameter(this, 'HostedZoneId', { parameterName: ParamNames.HOSTEDZONE_ID, stringValue: 'Z04057...' });
   }
 
   public createAccessPermissions(gitHubUserName: string, gitHubRepoName: string) {
@@ -49,7 +49,7 @@ export class ResumeFrontendConfigurator extends Construct {
   }
 
   private createAccessPermissionsForIaCUpdate(identityProvider: IOpenIdConnectProvider, gitHubUserName: string, gitHubRepoName: string) {
-    const managedPolicy = new ManagedPolicy(this, 'ResumeIaCDeployPolicy', {
+    const managedPolicy = new ManagedPolicy(this, 'IaCDeployPolicy', {
       description: 'Permissions required to IaC update from CDK.',
       statements: [new PolicyStatement({
         actions: [
@@ -79,13 +79,13 @@ export class ResumeFrontendConfigurator extends Construct {
       }
     );   
 
-    const role = new Role(this, 'ResumeIaCDeployer', {
+    const role = new Role(this, 'IaCDeployer', {
       description: 'The permissions assigned to the GitHub Actions workflow.',
       assumedBy: principal,
     });
     role.addManagedPolicy(managedPolicy);
 
-    new cdk.CfnOutput(this, 'ResumeOutputAwsCdkRoleArn', {
+    new cdk.CfnOutput(this, 'OutputAwsCdkRoleArn', {
       value: role.roleArn
     }).overrideLogicalId('AwsCdkRoleArn');
   }
