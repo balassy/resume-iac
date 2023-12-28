@@ -170,7 +170,6 @@ export class Frontend extends Construct {
       id: 'AwsSolutions-IAM5',
       reason: 'Access is granted to perform all sync operations on the bucket and its items.',
       appliesTo: [
-        `Resource::${bucketArn}`,
         `Resource::${bucketArn}/*`
       ]
     }]);
