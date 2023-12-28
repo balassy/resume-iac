@@ -172,7 +172,7 @@ export class Frontend extends Construct {
       appliesTo: [
         { regex: /^Resource::(.*):FrontendRootBucket\/\*$/g.toString() }
       ]
-    }]);
+    }], true);
 
     return policy;
   }
